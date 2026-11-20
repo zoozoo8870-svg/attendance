@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>เช็คชื่อออนไลน์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --brand:#0f766e; --brand-2:#14b8a6; --brand-soft:#ccfbf1;
+    --ok:#16a34a; --ok-soft:#dcfce7; --warn:#d97706; --warn-soft:#fef3c7;
+    --bad:#dc2626; --bad-soft:#fee2e2;
+    --bg:#f1f5f9; --card:#ffffff; --text:#0f172a; --muted:#64748b; --line:#e2e8f0;
+    --radius:16px; --shadow:0 1px 2px rgba(15,23,42,.06),0 4px 14px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:'Sarabun',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.45;min-height:100vh}
+  button,input,select,textarea{font-family:inherit;font-size:16px}
+  .wrap{max-width:560px;margin:0 auto;padding:0 14px calc(96px + env(safe-area-inset-bottom))}
+
+  /* Header */
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--brand),#115e59);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+  .hd{max-width:560px;margin:0 auto}
+  .hd-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .hd h1{font-size:19px;margin:0;font-weight:700;line-height:1.25}
+  .hd .date{font-size:14px;opacity:.9;margin-top:2px}
+  .sync{display:inline-flex;align-items:center;gap:6px;font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:999px;white-space:nowrap}
+  .dot{width:8px;height:8px;border-radius:50%;background:#cbd5e1}
+  .dot.on{background:#4ade80}.dot.busy{background:#facc15}.dot.err{background:#f87171}
+  .prog{margin-top:12px}
+  .prog-row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px}
+  .prog-row b{font-size:18px}
+  .bar{height:10px;background:rgba(255,255,255,.25);border-radius:999px;overflow:hidden}
+  .bar>i{display:block;height:100%;width:0;background:#a7f3d0;border-radius:999px;transition:width .4s}
+
+  /* Common */
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-top:14px}
+  .card h2{font-size:17px;margin:0 0 10px}
+  .muted{color:var(--muted)}
+  .small{font-size:13px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:13px 16px;font-weight:600;cursor:pointer;background:var(--brand);color:#fff;min-height:48px;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn.ghost{background:#fff;color:var(--brand);border:1.5px solid var(--brand)}
+  .btn.gray{background:#e2e8f0;color:var(--text)}
+  .btn.danger{background:var(--bad)}
+  .btn.ok{background:var(--ok)}
+  .btn[disabled]{opacity:.5;pointer-events:none}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .stack>*+*{margin-top:10px}
+  input[type=text],input[type=url],input[type=password],input[type=date],input[type=tel],select{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--text);outline:none}
+  input:focus,select:focus{border-color:var(--brand-2)}
+  label.lb{display:block;font-weight:600;font-size:14px;margin:0 0 6px}
+
+  /* Search + filters */
+  .search{position:relative;margin-top:14px}
+  .search input{padding-left:42px;height:50px;border-radius:14px;box-shadow:var(--shadow);border-color:transparent}
+  .search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  .chips{display:flex;gap:8px;margin-top:12px;overflow-x:auto;padding-bottom:2px}
+  .chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap;cursor:pointer}
+  .chip.active{background:var(--brand);border-color:var(--brand);color:#fff}
+
+  /* Me banner */
+  .me{display:flex;align-items:center;gap:12px;background:var(--ok-soft);border:1.5px solid #86efac;border-radius:var(--radius);padding:12px 14px;margin-top:14px}
+  .me .big{font-size:28px}
+  .me b{display:block}
+
+  /* People list */
+  .list{margin-top:12px}
+  .group-title{font-size:13px;font-weight:700;color:var(--muted);margin:16px 4px 6px;text-transform:none}
+  .person{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);cursor:pointer;border:2px solid transparent;transition:border-color .2s,background .2s;width:100%;text-align:left;color:inherit}
+  .person:active{transform:scale(.99)}
+  .person.done{background:#f0fdf4;border-color:#bbf7d0}
+  .av{flex:0 0 44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;background:var(--brand-soft);color:var(--brand)}
+  .person.done .av{background:var(--ok);color:#fff}
+  .pinfo{flex:1;min-width:0}
+  .pname{font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pcomp{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pst{flex:0 0 auto;text-align:right;font-size:13px}
+  .tag{display:inline-block;padding:4px 10px;border-radius:999px;font-weight:600;font-size:13px}
+  .tag.ok{background:var(--ok);color:#fff}
+  .tag.wait{background:#f1f5f9;color:var(--muted)}
+  .tag.pend{background:var(--warn-soft);color:var(--warn)}
+  .empty{text-align:center;color:var(--muted);padding:30px 10px}
+
+  /* Summary */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+  .stat{background:var(--card);border-radius:14px;padding:14px 8px;text-align:center;box-shadow:var(--shadow)}
+  .stat b{display:block;font-size:28px;line-height:1.1}
+  .stat span{font-size:13px;color:var(--muted)}
+  .stat.ok b{color:var(--ok)}.stat.bad b{color:var(--bad)}
+  .sline{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
+  .sline:last-child{border-bottom:0}
+  .sline .n{min-width:0}
+  .sline .n div:first-child{font-weight:600}
+  .sline .t{white-space:nowrap;color:var(--ok);font-weight:600}
+  .sline .t.x{color:var(--bad)}
+
+  /* Bottom nav */
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  .tabs-in{max-width:560px;margin:0 auto;display:flex}
+  .tab{flex:1;border:0;background:none;padding:8px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer}
+  .tab svg{width:24px;height:24px}
+  .tab.active{color:var(--brand)}
+
+  /* Modal */
+  .modal{position:fixed;inset:0;z-index:50;background:rgba(15,23,42,.5);display:none;align-items:flex-end;justify-content:center}
+  .modal.show{display:flex;animation:fade .15s}
+  .sheet{background:#fff;width:100%;max-width:560px;border-radius:22px 22px 0 0;padding:22px 18px calc(18px + env(safe-area-inset-bottom));animation:up .2s ease-out}
+  .sheet .grab{width:42px;height:5px;background:#cbd5e1;border-radius:9px;margin:-8px auto 14px}
+  .sheet h3{margin:0 0 4px;font-size:20px;text-align:center}
+  .sheet .sub{text-align:center;color:var(--muted);margin-bottom:16px}
+  .sheet .bigav{width:72px;height:72px;font-size:30px;margin:0 auto 10px;flex:none}
+  @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+
+  /* Toast */
+  .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:11px 18px;border-radius:12px;font-size:15px;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* Code box */
+  pre.code{background:#0f172a;color:#e2e8f0;padding:12px;border-radius:12px;font-size:12px;overflow:auto;max-height:260px;white-space:pre;font-family:ui-monospace,Menlo,Consolas,monospace}
+  ol.steps{padding-left:20px;margin:8px 0}
+  ol.steps li{margin-bottom:6px}
+  .hidden{display:none!important}
+  .note{background:var(--warn-soft);color:#92400e;border-radius:12px;padding:10px 12px;font-size:14px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <div class="hd-top">
+      <div>
+        <h1 id="evName">เช็คชื่อผู้เข้าอบรม</h1>
+        <div class="date" id="evDate">-</div>
+      </div>
+      <div class="sync" id="syncBox"><span class="dot" id="syncDot"></span><span id="syncTxt">ในเครื่อง</span></div>
+    </div>
+    <div class="prog">
+      <div class="prog-row"><span>มาแล้ว <b id="cntIn">0</b> / <span id="cntAll">0</span> คน</span><span id="cntPct">0%</span></div>
+      <div class="bar"><i id="barFill"></i></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===== หน้าเช็คชื่อ ===== -->
+  <section id="page-check">
+    <div id="meBox"></div>
+    <div class="search">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="text" id="q" placeholder="พิมพ์ค้นหาชื่อ หรือบริษัท" autocomplete="off">
+    </div>
+    <div class="chips" id="chips">
+      <button class="chip active" data-f="all">ทั้งหมด</button>
+      <button class="chip" data-f="wait">ยังไม่มา</button>
+      <button class="chip" data-f="done">มาแล้ว</button>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <!-- ===== หน้าสรุป ===== -->
+  <section id="page-sum" class="hidden">
+    <div class="stats">
+      <div class="stat"><b id="sAll">0</b><span>ทั้งหมด</span></div>
+      <div class="stat ok"><b id="sIn">0</b><span>มาแล้ว</span></div>
+      <div class="stat bad"><b id="sOut">0</b><span>ยังไม่มา</span></div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <button class="btn" id="btnCopy">📋 คัดลอกสรุป</button>
+        <button class="btn ghost" id="btnCsv">⬇️ ไฟล์ Excel</button>
+      </div>
+      <button class="btn gray" id="btnRefresh" style="margin-top:10px">🔄 โหลดข้อมูลล่าสุด</button>
+    </div>
+    <div class="card">
+      <h2>❌ ยังไม่มา (<span id="sOut2">0</span>)</h2>
+      <div id="sumOut"></div>
+    </div>
+    <div class="card">
+      <h2>✅ มาแล้ว (<span id="sIn2">0</span>)</h2>
+      <div id="sumIn"></div>
+    </div>
+  </section>
+
+  <!-- ===== หน้าตั้งค่า ===== -->
+  <section id="page-set" class="hidden">
+    <div id="lockBox" class="card">
+      <h2>🔒 สำหรับผู้ดูแลเท่านั้น</h2>
+      <p class="muted small" style="margin-top:0">ใส่รหัส PIN เพื่อเข้าหน้าตั้งค่า (รหัสเริ่มต้นคือ 1234)</p>
+      <div class="stack">
+        <input type="password" id="pinIn" inputmode="numeric" placeholder="รหัส PIN" maxlength="12">
+        <button class="btn" id="btnUnlock">เข้าสู่หน้าตั้งค่า</button>
+      </div>
+    </div>
+
+    <div id="setBox" class="hidden">
+      <div class="card stack">
+        <h2>📅 งาน / วันที่</h2>
+        <div>
+          <label class="lb" for="setName">ชื่องาน</label>
+          <input type="text" id="setName">
+        </div>
+        <div>
+          <label class="lb" for="setDate">วันที่ที่ต้องการดู / เช็คชื่อ</label>
+          <input type="date" id="setDate">
+          <div class="small muted" style="margin-top:4px">ปกติระบบจะใช้วันที่วันนี้อัตโนมัติ</div>
+        </div>
+        <button class="btn" id="btnSaveEv">บันทึก</button>
+      </div>
+
+      <div class="card stack">
+        <h2>➕ เพิ่มรายชื่อ (Walk-in)</h2>
+        <input type="text" id="addName" placeholder="ชื่อ-นามสกุล">
+        <input type="text" id="addComp" placeholder="บริษัท / หน่วยงาน (ไม่บังคับ)">
+        <button class="btn" id="btnAdd">เพิ่มรายชื่อ</button>
+        <div id="extraList"></div>
+      </div>
+
+      <div class="card stack">
+        <h2>☁️ เชื่อม Google Sheet (ให้ทุกคนเช็คชื่อจากมือถือตัวเองได้)</h2>
+        <div class="note">ถ้ายังไม่เชื่อม ข้อมูลจะเก็บไว้ในมือถือเครื่องนี้เครื่องเดียว เหมาะกับให้เจ้าหน้าที่ถือเครื่องเดียวเช็คชื่อให้ทุกคน</div>
+        <div>
+          <label class="lb" for="setUrl">URL ของ Web App (Apps Script)</label>
+          <input type="url" id="setUrl" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+        <div class="row">
+          <button class="btn" id="btnSaveUrl">บันทึก & ทดสอบ</button>
+          <button class="btn gray" id="btnClearUrl">ยกเลิกการเชื่อม</button>
+        </div>
+        <details>
+          <summary style="font-weight:600;cursor:pointer;padding:6px 0">วิธีตั้งค่า (ทำครั้งเดียว ~5 นาที)</summary>
+          <ol class="steps small">
+            <li>เปิด Google Sheet ใหม่ → เมนู <b>ส่วนขยาย → Apps Script</b></li>
+            <li>ลบโค้ดเดิมทิ้ง แล้ววางโค้ดด้านล่าง (กดปุ่มคัดลอกได้เลย) → กดบันทึก</li>
+            <li>กด <b>ทำให้ใช้งานได้ → การทำให้ใช้งานได้รายการใหม่</b> → เลือกประเภท <b>เว็บแอป</b></li>
+            <li>ตั้ง “ดำเนินการในฐานะ” = <b>ฉัน</b> และ “ผู้มีสิทธิ์เข้าถึง” = <b>ทุกคน</b> → กดทำให้ใช้งานได้ และอนุญาตสิทธิ์</li>
+            <li>คัดลอก URL ที่ลงท้ายด้วย <b>/exec</b> มาวางในช่องด้านบน</li>
+            <li>ถ้าจะให้มือถือทุกเครื่องใช้ได้ทันที ให้นำ URL ไปใส่ในไฟล์ index.html ตรง <b>SCRIPT_URL</b> ด้านบนสุดของสคริปต์ แล้วอัปโหลดไฟล์ใหม่</li>
+          </ol>
+          <button class="btn ghost" id="btnCopyGs">📋 คัดลอกโค้ด Apps Script</button>
+          <pre class="code" id="gsView"></pre>
+        </details>
+      </div>
+
+      <div class="card stack">
+        <h2>🔑 เปลี่ยนรหัส PIN</h2>
+        <input type="password" id="newPin" inputmode="numeric" placeholder="รหัสใหม่ (ตัวเลข 4 หลักขึ้นไป)" maxlength="12">
+        <button class="btn" id="btnPin">เปลี่ยนรหัส</button>
+      </div>
+
+      <div class="card stack">
+        <h2>🗑️ ล้างข้อมูล</h2>
+        <p class="small muted" style="margin:0">ล้างการเช็คชื่อของวันที่ที่เลือก (เฉพาะข้อมูลในเครื่องนี้ ถ้าเชื่อม Google Sheet ให้ลบใน Sheet แทน)</p>
+        <button class="btn danger" id="btnReset">ล้างการเช็คชื่อของวันนี้</button>
+        <button class="btn gray" id="btnLock">🔒 ล็อกหน้าตั้งค่า</button>
+      </div>
+      <p class="small muted" style="text-align:center">ระบบเช็คชื่อออนไลน์ • เวอร์ชัน 1.0</p>
+    </div>
+  </section>
+</main>
+
+<!-- Bottom tabs -->
+<nav class="tabs">
+  <div class="tabs-in">
+    <button class="tab active" data-p="check">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      เช็คชื่อ
+    </button>
+    <button class="tab" data-p="sum">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
+      สรุป
+    </button>
+    <button class="tab" data-p="set">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      ตั้งค่า
+    </button>
+  </div>
+</nav>
+
+<!-- Modal -->
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<!-- โค้ด Google Apps Script (แสดงในหน้าตั้งค่าให้คัดลอก) -->
+<script type="text/plain" id="gsCode">/**
+ * ระบบเช็คชื่อออนไลน์ - Google Apps Script (วางใน Google Sheet → ส่วนขยาย → Apps Script)
+ * ทำให้ใช้งานได้เป็น "เว็บแอป" : ดำเนินการในฐานะ = ฉัน, ผู้มีสิทธิ์เข้าถึง = ทุกคน
+ */
+const SHEET_NAME = 'เช็คชื่อ';
+
+function getSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_NAME);
+    sh.appendRow(['วันที่', 'ชื่อ-นามสกุล', 'บริษัท/หน่วยงาน', 'เวลาเช็คชื่อ', 'บันทึกเมื่อ']);
+    sh.setFrozenRows(1);
+    sh.getRange('A1:E1').setFontWeight('bold').setBackground('#ccfbf1');
+  }
+  return sh;
+}
+
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  const date = (e && e.parameter && e.parameter.date) || '';
+  const values = getSheet_().getDataRange().getDisplayValues();
+  const rows = [];
+  for (let i = 1; i < values.length; i++) {
+    const r = values[i];
+    if (!date || r[0] === date) rows.push({ date: r[0], name: r[1], company: r[2], time: r[3] });
+  }
+  return json_({ ok: true, rows: rows });
+}
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    const d = JSON.parse(e.postData.contents);
+    const sh = getSheet_();
+    const values = sh.getDataRange().getDisplayValues();
+    let rowIndex = -1;
+    for (let i = 1; i < values.length; i++) {
+      if (values[i][0] === d.date && values[i][1] === d.name) { rowIndex = i + 1; break; }
+    }
+    if (d.action === 'checkin') {
+      if (rowIndex > 0) return json_({ ok: true, duplicate: true });
+      sh.appendRow(["'" + d.date, d.name, d.company || '', "'" + d.time, new Date()]);
+    } else if (d.action === 'undo') {
+      if (rowIndex > 0) sh.deleteRow(rowIndex);
+    }
+    return json_({ ok: true });
+  } catch (err) {
+    return json_({ ok: false, error: String(err) });
+  } finally {
+    lock.releaseLock();
+  }
+}
+</script>
+
+<script>
+/* =====================================================================
+   ⚙️ ตั้งค่าหลัก (แก้ตรงนี้ได้เลย)
+   ===================================================================== */
+const CONFIG = {
+  EVENT_NAME: 'เช็คชื่อผู้เข้าอบรม',
+  // วาง URL Web App ของ Google Apps Script ที่นี่ เพื่อให้มือถือทุกเครื่องเห็นข้อมูลเดียวกัน
+  // ตัวอย่าง: 'https://script.google.com/macros/s/AKfycb.../exec'
+  SCRIPT_URL: '',
+  DEFAULT_PIN: '1234',   // รหัสเข้าหน้าตั้งค่า / ยกเลิกการเช็คชื่อ
+  POLL_SECONDS: 15       // ดึงข้อมูลล่าสุดทุกกี่วินาที (เมื่อเชื่อม Google Sheet)
+};
+
+/* =====================================================================
+   👥 รายชื่อผู้เข้าร่วม (จากแบบฟอร์มลงทะเบียน)
+   t = คำนำหน้า, n = ชื่อ-นามสกุล, c = บริษัท/หน่วยงาน
+   ===================================================================== */
+const MEMBERS = [
+  { t:'นาย',    n:'ภณธกร วงศ์เจริญ',            c:'เบทาโกร' },
+  { t:'นางสาว', n:'วิภาดา พลาธนพร',             c:'Foodle Noodle Co., Ltd' },
+  { t:'นาย',    n:'สิริวรรณ รอดศิริ',            c:'Foodle Noodle Co., Ltd' },
+  { t:'นาย',    n:'วิศรุต สุดสัตย์',              c:'Foodle Noodle Co., Ltd' },
+  { t:'นาย',    n:'กิตติธัช ธูปถมพงศ์',          c:'Foodle Noodle Co., Ltd' },
+  { t:'นางสาว', n:'วราภรณ์ หวานล้ำ',            c:'บริษัท โอชาฟูดแพ็ค จำกัด' },
+  { t:'นางสาว', n:'ณัฏชา แสวงหอม',              c:'บริษัท โอชาฟูดแพ็ค จำกัด' },
+  { t:'นางสาว', n:'ธนวรรณ ตั้งตรงพานิช',         c:'บริษัท โอชาฟูดแพ็ค จำกัด' },
+  { t:'นางสาว', n:'ระวีวรรณ การภักดี',           c:'บริษัท โอชาฟูดแพ็ค จำกัด' },
+  { t:'นางสาว', n:'จิตรา คำแหง',                c:'บริษัท โอชาฟูดแพ็ค จำกัด' },
+  { t:'นางสาว', n:'อรณิชา ครองศักดิ์ศิริ',        c:'บริษัท โอชาฟูดแพ็ค จำกัด' },
+  { t:'นางสาว', n:'นัทธมน พุทธพรม',             c:'บริษัท โอชาฟูดแพ็ค จำกัด' },
+  { t:'นาย',    n:'นรพนธ์ จิรัฐิติกาลพงศ์',       c:'บริษัท ซีเอ็ม พรีเมี่ยม ไรซ์ จำกัด' },
+  { t:'นาย',    n:'คงติภูมิ มณีโชค',             c:'บริษัท ซีเอ็ม พรีเมี่ยม ไรซ์ จำกัด' },
+  { t:'นางสาว', n:'จิดาภา ทองเกิด',             c:'บริษัท เทพผดุงพรมะพร้าว จำกัด' },
+  { t:'นางสาว', n:'สุชาดา เอี่ยมสำอางค์',         c:'บริษัท เทพผดุงพรมะพร้าว จำกัด' },
+  { t:'นางสาว', n:'พิชญา พิสุทธิ์พิเชฎฐ์',        c:'บริษัท เทพผดุงพรมะพร้าว จำกัด' },
+  { t:'นางสาว', n:'วันทนา จุตาลานนท์',           c:'บริษัท เทพผดุงพรมะพร้าว จำกัด' },
+  { t:'นาย',    n:'คณาธิป จำนงค์',              c:'บริษัท ลาโต้ ฟู้ดแอนด์ดริ้งส์ จำกัด' },
+  { t:'นางสาว', n:'พรพิมล ผลเพิ่ม',              c:'บริษัท ลาโต้ ฟู้ดแอนด์ดริ้งส์ จำกัด' },
+  { t:'นางสาว', n:'รัตติยากร ฉายหิรัญ',          c:'บริษัท สยาม คอนซูมเมอร์ โปรดักส์ จำกัด' },
+  { t:'นาย',    n:'วิชยุตม์ กีรติธนาภรณ์',        c:'บริษัท เมอร์เดียนท์ จำกัด' }
+];
+
+/* =====================================================================
+   ระบบภายใน (ไม่จำเป็นต้องแก้)
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const todayKey = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); };
+const nowTime  = () => { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); };
+const shortTime = t => String(t || '').slice(0, 5);
+const thaiDate = key => {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m-1, d).toLocaleDateString('th-TH', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+};
+const norm = s => String(s || '').replace(/\s+/g, ' ').trim();
+
+let settings = LS.get('att_settings', {});      // { eventName, scriptUrl, pin, extra:[] }
+settings.extra = settings.extra || [];
+let records  = LS.get('att_records', {});       // { 'YYYY-MM-DD': { name: {time, company, pending} } }
+let queue    = LS.get('att_queue', []);         // งานที่รอส่งขึ้น Google Sheet
+let viewDate = todayKey();
+let filter   = 'all';
+let unlocked = false;
+let syncing  = false;
+let lastError = false;
+
+const apiUrl    = () => norm(settings.scriptUrl || CONFIG.SCRIPT_URL);
+const eventName = () => settings.eventName || CONFIG.EVENT_NAME;
+const pinCode   = () => settings.pin || CONFIG.DEFAULT_PIN;
+const saveAll   = () => { LS.set('att_settings', settings); LS.set('att_records', records); LS.set('att_queue', queue); };
+const dayRec    = () => (records[viewDate] = records[viewDate] || {});
+
+function people(){
+  const map = new Map();
+  MEMBERS.forEach(p => map.set(norm(p.n), { t:p.t || '', n:norm(p.n), c:p.c || '' }));
+  settings.extra.forEach(p => { if(!map.has(norm(p.n))) map.set(norm(p.n), { t:'', n:norm(p.n), c:p.c || '', extra:true }); });
+  // ชื่อที่ถูกเพิ่มจากเครื่องอื่น (มีใน Google Sheet แต่ไม่มีในรายชื่อ)
+  Object.entries(dayRec()).forEach(([n, r]) => { if(!map.has(n)) map.set(n, { t:'', n, c:r.company || '', extra:true }); });
+  return Array.from(map.values());
+}
+
+/* ---------- Render ---------- */
+function renderHeader(){
+  const all = people(), rec = dayRec();
+  const inCount = all.filter(p => rec[p.n]).length;
+  const pct = all.length ? Math.round(inCount * 100 / all.length) : 0;
+  $('#evName').textContent = eventName();
+  $('#evDate').textContent = thaiDate(viewDate) + (viewDate !== todayKey() ? ' (ไม่ใช่วันนี้)' : '');
+  $('#cntIn').textContent = inCount;
+  $('#cntAll').textContent = all.length;
+  $('#cntPct').textContent = pct + '%';
+  $('#barFill').style.width = pct + '%';
+  document.title = 'เช็คชื่อ ' + inCount + '/' + all.length;
+
+  const dot = $('#syncDot'), txt = $('#syncTxt');
+  dot.className = 'dot';
+  if(!apiUrl()){ txt.textContent = 'บันทึกในเครื่อง'; }
+  else if(syncing){ dot.classList.add('busy'); txt.textContent = 'กำลังซิงก์…'; }
+  else if(lastError || queue.length){ dot.classList.add('err'); txt.textContent = queue.length ? ('รอส่ง ' + queue.length) : 'ออฟไลน์'; }
+  else { dot.classList.add('on'); txt.textContent = 'ออนไลน์'; }
+}
+
+function renderMe(){
+  const me = LS.get('att_me', null);
+  const r = me && dayRec()[me];
+  $('#meBox').innerHTML = r
+    ? `<div class="me"><div class="big">✅</div><div><b>${esc(me)}</b><span class="small">เช็คชื่อเรียบร้อยแล้ว เวลา ${esc(shortTime(r.time))} น.</span></div></div>`
+    : '';
+}
+
+function renderList(){
+  const q = norm($('#q').value).toLowerCase();
+  const rec = dayRec();
+  let list = people().filter(p => !q || (p.n + ' ' + p.c + ' ' + p.t).toLowerCase().includes(q));
+  if(filter === 'wait') list = list.filter(p => !rec[p.n]);
+  if(filter === 'done') list = list.filter(p => rec[p.n]);
+
+  if(!list.length){
+    $('#list').innerHTML = `<div class="empty">${q ? 'ไม่พบชื่อที่ค้นหา<br><span class="small">ถ้าไม่มีชื่อ แจ้งเจ้าหน้าที่ให้เพิ่มชื่อได้</span>' : (filter==='wait' ? '🎉 ทุกคนมาครบแล้ว' : 'ยังไม่มีข้อมูล')}</div>`;
+    return;
+  }
+  // จัดกลุ่มตามบริษัท
+  const groups = {};
+  list.forEach(p => { const g = p.c || 'อื่น ๆ'; (groups[g] = groups[g] || []).push(p); });
+  let html = '';
+  Object.keys(groups).sort((a,b) => a.localeCompare(b, 'th')).forEach(g => {
+    html += `<div class="group-title">${esc(g)}</div>`;
+    groups[g].forEach(p => {
+      const r = rec[p.n];
+      const st = r ? (r.pending ? `<span class="tag pend">⏳ ${esc(shortTime(r.time))}</span>` : `<span class="tag ok">✓ ${esc(shortTime(r.time))}</span>`)
+                   : `<span class="tag wait">แตะเพื่อเช็คชื่อ</span>`;
+      html += `<button class="person ${r ? 'done' : ''}" data-n="${esc(p.n)}">
+        <div class="av">${r ? '✓' : esc(p.n.charAt(0))}</div>
+        <div class="pinfo"><div class="pname">${esc((p.t ? p.t + ' ' : '') + p.n)}</div><div class="pcomp">${esc(p.c || '-')}</div></div>
+        <div class="pst">${st}</div>
+      </button>`;
+    });
+  });
+  $('#list').innerHTML = html;
+}
+
+function renderSummary(){
+  const rec = dayRec();
+  const all = people();
+  const inList = all.filter(p => rec[p.n]).sort((a,b) => String(rec[a.n].time).localeCompare(String(rec[b.n].time)));
+  const outList = all.filter(p => !rec[p.n]);
+  $('#sAll').textContent = all.length;
+  $('#sIn').textContent = $('#sIn2').textContent = inList.length;
+  $('#sOut').textContent = $('#sOut2').textContent = outList.length;
+  $('#sumOut').innerHTML = outList.length ? outList.map(p => `<div class="sline"><div class="n"><div>${esc(p.n)}</div><div class="small muted">${esc(p.c)}</div></div><div class="t x">ยังไม่มา</div></div>`).join('')
+                                          : '<div class="empty">🎉 มาครบทุกคน</div>';
+  $('#sumIn').innerHTML = inList.length ? inList.map((p,i) => `<div class="sline"><div class="n"><div>${i+1}. ${esc(p.n)}</div><div class="small muted">${esc(p.c)}</div></div><div class="t">${esc(shortTime(rec[p.n].time))} น.</div></div>`).join('')
+                                        : '<div class="empty">ยังไม่มีใครเช็คชื่อ</div>';
+}
+
+function renderSettings(){
+  $('#lockBox').classList.toggle('hidden', unlocked);
+  $('#setBox').classList.toggle('hidden', !unlocked);
+  if(!unlocked) return;
+  $('#setName').value = eventName();
+  $('#setDate').value = viewDate;
+  $('#setUrl').value = settings.scriptUrl || CONFIG.SCRIPT_URL || '';
+  $('#extraList').innerHTML = settings.extra.length
+    ? '<div class="small muted" style="margin-bottom:4px">รายชื่อที่เพิ่มในเครื่องนี้:</div>' + settings.extra.map((p,i) =>
+        `<div class="sline"><div class="n"><div>${esc(p.n)}</div><div class="small muted">${esc(p.c || '-')}</div></div><button class="chip" data-del="${i}">ลบ</button></div>`).join('')
+    : '';
+}
+
+function render(){ renderHeader(); renderMe(); renderList(); renderSummary(); renderSettings(); }
+
+/* ---------- Modal / Toast ---------- */
+function openModal(html){ $('#sheet').innerHTML = '<div class="grab"></div>' + html; $('#modal').classList.add('show'); }
+function closeModal(){ $('#modal').classList.remove('show'); }
+$('#modal').addEventListener('click', e => { if(e.target.id === 'modal') closeModal(); });
+let toastTimer;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2400); }
+
+/* ---------- Check-in ---------- */
+function askCheck(name){
+  const p = people().find(x => x.n === name); if(!p) return;
+  const r = dayRec()[name];
+  if(r){
+    openModal(`
+      <div class="av bigav" style="background:var(--ok);color:#fff">✓</div>
+      <h3>${esc(p.n)}</h3>
+      <div class="sub">${esc(p.c || '')}<br>เช็คชื่อแล้วเวลา <b>${esc(shortTime(r.time))} น.</b></div>
+      <div class="stack">
+        <button class="btn gray" id="mClose">ปิด</button>
+        <button class="btn ghost" id="mUndo" style="color:var(--bad);border-color:var(--bad)">ยกเลิกการเช็คชื่อ (ผู้ดูแล)</button>
+      </div>`);
+    $('#mClose').onclick = closeModal;
+    $('#mUndo').onclick = () => requirePin(() => { undoCheck(name); closeModal(); });
+    return;
+  }
+  openModal(`
+    <div class="av bigav">${esc(p.n.charAt(0))}</div>
+    <h3>${esc((p.t ? p.t + ' ' : '') + p.n)}</h3>
+    <div class="sub">${esc(p.c || '')}<br>${esc(thaiDate(viewDate))}</div>
+    <div class="stack">
+      <button class="btn ok" id="mYes" style="font-size:18px;min-height:56px">✅ ยืนยันเช็คชื่อ</button>
+      <button class="btn gray" id="mNo">ยกเลิก</button>
+    </div>`);
+  $('#mNo').onclick = closeModal;
+  $('#mYes').onclick = () => { doCheck(p); closeModal(); };
+}
+
+function doCheck(p){
+  const rec = dayRec();
+  if(rec[p.n]) return;
+  const time = nowTime();
+  rec[p.n] = { time, company: p.c || '', pending: !!apiUrl() };
+  LS.set('att_me', p.n);
+  if(apiUrl()) queue.push({ action:'checkin', date:viewDate, name:p.n, company:p.c || '', time });
+  saveAll(); render();
+  if(navigator.vibrate) navigator.vibrate(60);
+  toast('เช็คชื่อสำเร็จ ✓ ' + shortTime(time) + ' น.');
+  flush();
+}
+
+function undoCheck(name){
+  delete dayRec()[name];
+  if(apiUrl()){
+    // ถ้ายังไม่ได้ส่ง check-in ขึ้นไป ให้ตัดออกจากคิวเลย
+    const i = queue.findIndex(q => q.action === 'checkin' && q.date === viewDate && q.name === name);
+    if(i >= 0) queue.splice(i, 1); else queue.push({ action:'undo', date:viewDate, name });
+  }
+  if(LS.get('att_me', null) === name) localStorage.removeItem('att_me');
+  saveAll(); render(); toast('ยกเลิกการเช็คชื่อแล้ว'); flush();
+}
+
+/* ---------- PIN ---------- */
+function requirePin(cb){
+  if(unlocked) return cb();
+  openModal(`
+    <h3>🔒 ใส่รหัส PIN ผู้ดูแล</h3>
+    <div class="sub">เฉพาะผู้ดูแลเท่านั้น</div>
+    <div class="stack">
+      <input type="password" id="mPin" inputmode="numeric" placeholder="รหัส PIN" maxlength="12">
+      <button class="btn" id="mPinOk">ยืนยัน</button>
+      <button class="btn gray" id="mPinNo">ยกเลิก</button>
+    </div>`);
+  setTimeout(() => $('#mPin') && $('#mPin').focus(), 150);
+  const ok = () => { if($('#mPin').value === pinCode()){ unlocked = true; closeModal(); cb(); render(); } else { toast('รหัสไม่ถูกต้อง'); $('#mPin').value=''; } };
+  $('#mPinOk').onclick = ok;
+  $('#mPin').addEventListener('keydown', e => { if(e.key === 'Enter') ok(); });
+  $('#mPinNo').onclick = closeModal;
+}
+
+/* ---------- Google Sheet sync ---------- */
+async function api(method, body, url){
+  url = url || apiUrl();
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 20000);
+  try{
+    const res = method === 'GET'
+      ? await fetch(url + (url.includes('?') ? '&' : '?') + 'date=' + encodeURIComponent(body) + '&_=' + Date.now(), { signal: ctrl.signal })
+      : await fetch(url, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ctrl.signal });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || 'error');
+    return data;
+  } finally { clearTimeout(t); }
+}
+
+async function flush(){
+  if(!apiUrl() || syncing || !queue.length) { renderHeader(); return; }
+  syncing = true; renderHeader();
+  try{
+    while(queue.length){
+      const item = queue[0];
+      await api('POST', item);
+      queue.shift();
+      if(item.action === 'checkin' && records[item.date] && records[item.date][item.name]) records[item.date][item.name].pending = false;
+      saveAll();
+    }
+    lastError = false;
+  }catch(e){ lastError = true; }
+  syncing = false; render();
+}
+
+async function pull(showToast){
+  if(!apiUrl()) { if(showToast) toast('ยังไม่ได้เชื่อม Google Sheet (ข้อมูลอยู่ในเครื่องนี้)'); return; }
+  if(syncing) return;
+  await flush();
+  syncing = true; renderHeader();
+  try{
+    const data = await api('GET', viewDate);
+    const map = {};
+    (data.rows || []).forEach(r => { const n = norm(r.name); if(n && r.date === viewDate) map[n] = { time:r.time, company:r.company || '', pending:false }; });
+    // คงรายการที่ยังรอส่งไว้
+    queue.filter(q => q.date === viewDate).forEach(q => {
+      if(q.action === 'checkin') map[q.name] = { time:q.time, company:q.company, pending:true };
+      if(q.action === 'undo') delete map[q.name];
+    });
+    records[viewDate] = map;
+    lastError = false; saveAll();
+    if(showToast) toast('อัปเดตข้อมูลล่าสุดแล้ว');
+  }catch(e){
+    lastError = true;
+    if(showToast) toast('เชื่อมต่อไม่ได้ ใช้ข้อมูลในเครื่องไปก่อน');
+  }
+  syncing = false; render();
+}
+
+/* ---------- Export ---------- */
+function summaryText(){
+  const rec = dayRec(), all = people();
+  const inL = all.filter(p => rec[p.n]).sort((a,b) => String(rec[a.n].time).localeCompare(String(rec[b.n].time)));
+  const outL = all.filter(p => !rec[p.n]);
+  let s = `📋 ${eventName()}\n🗓 ${thaiDate(viewDate)}\n\n✅ มาแล้ว ${inL.length}/${all.length} คน\n`;
+  inL.forEach((p,i) => s += `${i+1}. ${p.n} (${shortTime(rec[p.n].time)})\n`);
+  s += `\n❌ ยังไม่มา ${outL.length} คน\n`;
+  outL.forEach((p,i) => s += `${i+1}. ${p.n}${p.c ? ' - ' + p.c : ''}\n`);
+  return s;
+}
+async function copyText(text){
+  try{ await navigator.clipboard.writeText(text); return true; }
+  catch(e){
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try{ ok = document.execCommand('copy'); }catch(_){}
+    ta.remove(); return ok;
+  }
+}
+function downloadCsv(){
+  const rec = dayRec();
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const rows = [['ลำดับ','คำนำหน้า','ชื่อ-นามสกุล','บริษัท/หน่วยงาน','สถานะ','เวลาเช็คชื่อ','วันที่']];
+  people().forEach((p,i) => { const r = rec[p.n]; rows.push([i+1, p.t, p.n, p.c, r ? 'มาแล้ว' : 'ยังไม่มา', r ? r.time : '', viewDate]); });
+  const csv = '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'เช็คชื่อ_' + viewDate + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast('ดาวน์โหลดไฟล์แล้ว (เปิดด้วย Excel ได้)');
+}
+
+/* ---------- Events ---------- */
+$$('.tab').forEach(b => b.addEventListener('click', () => {
+  $$('.tab').forEach(x => x.classList.toggle('active', x === b));
+  ['check','sum','set'].forEach(p => $('#page-' + p).classList.toggle('hidden', p !== b.dataset.p));
+  window.scrollTo(0, 0);
+  if(b.dataset.p === 'sum') pull(false);
+}));
+$('#q').addEventListener('input', renderList);
+$('#chips').addEventListener('click', e => {
+  const c = e.target.closest('.chip'); if(!c) return;
+  filter = c.dataset.f; $$('#chips .chip').forEach(x => x.classList.toggle('active', x === c)); renderList();
+});
+$('#list').addEventListener('click', e => { const b = e.target.closest('.person'); if(b) askCheck(b.dataset.n); });
+
+$('#btnCopy').onclick = async () => toast(await copyText(summaryText()) ? 'คัดลอกแล้ว วางใน LINE ได้เลย' : 'คัดลอกไม่สำเร็จ');
+$('#btnCsv').onclick = downloadCsv;
+$('#btnRefresh').onclick = () => pull(true);
+
+const unlock = () => { if($('#pinIn').value === pinCode()){ unlocked = true; $('#pinIn').value=''; render(); } else { toast('รหัสไม่ถูกต้อง'); $('#pinIn').value=''; } };
+$('#btnUnlock').onclick = unlock;
+$('#pinIn').addEventListener('keydown', e => { if(e.key === 'Enter') unlock(); });
+$('#btnLock').onclick = () => { unlocked = false; render(); toast('ล็อกแล้ว'); };
+
+$('#btnSaveEv').onclick = () => {
+  const n = norm($('#setName').value);
+  settings.eventName = n && n !== CONFIG.EVENT_NAME ? n : '';
+  if($('#setDate').value) viewDate = $('#setDate').value;
+  saveAll(); render(); pull(false); toast('บันทึกแล้ว');
+};
+$('#btnAdd').onclick = () => {
+  const n = norm($('#addName').value), c = norm($('#addComp').value);
+  if(!n) return toast('กรุณาใส่ชื่อ');
+  if(people().some(p => p.n === n)) return toast('มีชื่อนี้อยู่แล้ว');
+  settings.extra.push({ n, c }); $('#addName').value = ''; $('#addComp').value = '';
+  saveAll(); render(); toast('เพิ่ม ' + n + ' แล้ว');
+};
+$('#extraList').addEventListener('click', e => {
+  const b = e.target.closest('[data-del]'); if(!b) return;
+  settings.extra.splice(Number(b.dataset.del), 1); saveAll(); render();
+});
+$('#btnSaveUrl').onclick = async () => {
+  const u = norm($('#setUrl').value);
+  if(u && !/^https:\/\/script\.google(usercontent)?\.com\//.test(u)) return toast('URL ไม่ถูกต้อง ต้องขึ้นต้นด้วย https://script.google.com/');
+  toast('กำลังทดสอบการเชื่อมต่อ…');
+  if(u){
+    try{ await api('GET', viewDate, u); }
+    catch(e){ return toast('เชื่อมต่อไม่ได้ ตรวจสอบว่าตั้ง "ผู้มีสิทธิ์เข้าถึง = ทุกคน" แล้ว'); }
+  }
+  settings.scriptUrl = u; saveAll();
+  // ส่งข้อมูลที่เช็คไว้ในเครื่องขึ้น Sheet ด้วย
+  if(u) Object.entries(dayRec()).forEach(([name, r]) => { if(!queue.some(q => q.date===viewDate && q.name===name)) queue.push({ action:'checkin', date:viewDate, name, company:r.company||'', time:r.time }); });
+  saveAll(); await pull(false); toast(u ? 'เชื่อม Google Sheet สำเร็จ ✓' : 'บันทึกแล้ว');
+};
+$('#btnClearUrl').onclick = () => { settings.scriptUrl = ''; queue = []; saveAll(); $('#setUrl').value = CONFIG.SCRIPT_URL; render(); toast('ยกเลิกการเชื่อมในเครื่องนี้แล้ว'); };
+$('#btnCopyGs').onclick = async () => toast(await copyText($('#gsCode').textContent.trim()) ? 'คัดลอกโค้ดแล้ว' : 'คัดลอกไม่สำเร็จ');
+$('#btnPin').onclick = () => {
+  const p = $('#newPin').value.trim();
+  if(!/^\d{4,12}$/.test(p)) return toast('รหัสต้องเป็นตัวเลข 4 หลักขึ้นไป');
+  settings.pin = p; $('#newPin').value = ''; saveAll(); toast('เปลี่ยนรหัสแล้ว');
+};
+$('#btnReset').onclick = () => {
+  openModal(`<h3>ล้างข้อมูลวันนี้?</h3><div class="sub">การเช็คชื่อของ ${esc(thaiDate(viewDate))} ในเครื่องนี้จะถูกลบทั้งหมด</div>
+    <div class="stack"><button class="btn danger" id="mRs">ล้างข้อมูล</button><button class="btn gray" id="mRn">ยกเลิก</button></div>`);
+  $('#mRn').onclick = closeModal;
+  $('#mRs').onclick = () => { records[viewDate] = {}; queue = queue.filter(q => q.date !== viewDate); saveAll(); closeModal(); render(); toast('ล้างข้อมูลแล้ว'); };
+};
+
+/* ---------- Start ---------- */
+$('#gsView').textContent = $('#gsCode').textContent.trim();
+render();
+pull(false);
+setInterval(() => { if(apiUrl() && !document.hidden && !$('#modal').classList.contains('show')) pull(false); }, CONFIG.POLL_SECONDS * 1000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden){ if(viewDate !== todayKey() && !unlocked) viewDate = todayKey(); pull(false); render(); } });
+window.addEventListener('online', () => flush());
+</script>
+</body>
+</html>
